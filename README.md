@@ -411,8 +411,21 @@ Login and account data use one Firebase project shared by the whole team: Fireba
 | --- | --- | --- |
 | `users` | Firebase Auth user ID | Username, email, statistics, and created date. Readable only by that user. |
 | `usernames` | Lowercase username | The owner's user ID. Keeps usernames unique. |
+| `users/{uid}/walks` | Auto ID | One completed walk: route ID and title, start and end times, and a copy of the route's stops (IDs, names, coordinates, prompt IDs and text). |
+| `users/{uid}/walks/{walkId}/photoLinks` | `{installId}_{assetId}` | A reference to a photo on the user's device: gallery asset ID, device install ID, platform, when it was taken, size, and the stop or prompt it belongs to (or none). `status` is `linked` or `removed`. |
 
 Passwords are handled by Firebase Auth and are never stored in Firestore.
+
+### Photos
+
+Photos stay in the phone's own photo gallery. FrameWalk does **not** upload them to Firebase Storage, and Firestore stores no image data. The Activity page reads them from the gallery with [`photo_manager`](https://pub.dev/packages/photo_manager), through `LocalPhotoService` (`lib/backend/services/local_photo_service.dart`).
+
+- **Permissions (Android):** the app asks the first time a user opens a walk's photos, after explaining why. Users can allow all photos or (on Android 14+) only selected ones. The app reads images only and never asks for all-files access.
+- **Matching:** photos taken during a walk (from 5 minutes before to 15 minutes after) are suggested for it. Photos with GPS within 75 m of a stop are grouped under that stop. Users can assign, move, or remove photos, or add any photo by hand. Removing a photo only removes the link; the photo stays in the camera roll.
+- **Device-specific references:** a gallery asset ID only works on the phone that created it. Each link records the app install that made it. On another phone, those photos are counted ("added on another device") but not shown, and are never treated as deleted. Syncing photos across devices would need a separate feature.
+- **iOS:** not set up yet. Before using photos on iOS, add `NSPhotoLibraryUsageDescription` to `ios/Runner/Info.plist`.
+
+To save a walk when the user finishes it, call `WalkHistoryService().saveCompletedWalk(WalkRecord.fromRoute(...))`. This also adds 1 to `routesCompleted`.
 
 **If you change `firestore.rules`,** deploy them. This requires the [Firebase CLI](https://firebase.google.com/docs/cli) and access to the project:
 
@@ -423,7 +436,7 @@ firebase deploy --only firestore:rules
 
 **If an app ID changes or a platform is added,** regenerate the config with the [FlutterFire CLI](https://firebase.google.com/docs/flutter/setup) by running `flutterfire configure` from `frame_walk`, then commit the result.
 
-**Running the auth tests** (they use fakes, so they don't touch the real project):
+**Running the tests** (auth, walk history, and photo tests all use fakes, so they never touch the real project or a real photo gallery):
 
 ```bash
 cd frame_walk

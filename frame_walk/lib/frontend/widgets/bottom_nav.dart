@@ -13,14 +13,26 @@ class BottomNav extends StatefulWidget {
 }
 
 class _BottomNavState extends State<BottomNav> {
+  static const _activityTabIndex = 2;
+
   int _currentTabIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    MapPage(),
-    ActivityPage(),
-    AccountPage(),
+  // IndexedStack keeps every tab alive, so Activity is told when it's
+  // reopened and can refresh walk history.
+  final _activityRefresh = ValueNotifier<int>(0);
+
+  late final List<Widget> _pages = [
+    const HomePage(),
+    const MapPage(),
+    ActivityPage(refreshSignal: _activityRefresh),
+    const AccountPage(),
   ];
+
+  @override
+  void dispose() {
+    _activityRefresh.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +45,9 @@ class _BottomNavState extends State<BottomNav> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: _currentTabIndex,
           onDestinationSelected: (int index) {
+            if (index == _activityTabIndex && index != _currentTabIndex) {
+              _activityRefresh.value++;
+            }
             setState(() {
               _currentTabIndex = index;
             });

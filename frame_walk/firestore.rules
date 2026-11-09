@@ -21,6 +21,41 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.username == resource.data.username;
+
+      // Completed walks. Kept as history, so clients can't delete them.
+      match /walks/{walkId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+
+        allow create, update: if request.auth != null
+          && request.auth.uid == uid
+          && request.resource.data.userId == uid
+          && request.resource.data.keys().hasOnly([
+            'userId', 'routeId', 'routeTitle', 'startedAt', 'completedAt',
+            'stopIds', 'promptIds', 'stops'
+          ])
+          && request.resource.data.startedAt is timestamp
+          && request.resource.data.completedAt is timestamp;
+
+        // References to photos that stay on the user's device. Only listed
+        // fields are allowed, so no image data or other extra fields can be
+        // stored.
+        match /photoLinks/{linkId} {
+          allow read, delete: if request.auth != null && request.auth.uid == uid;
+
+          allow create, update: if request.auth != null
+            && request.auth.uid == uid
+            && request.resource.data.userId == uid
+            && request.resource.data.walkId == walkId
+            && request.resource.data.keys().hasOnly([
+              'userId', 'walkId', 'routeId', 'assetId', 'platform',
+              'deviceInstallId', 'takenAt', 'width', 'height', 'stopId',
+              'promptId', 'status', 'updatedAt'
+            ])
+            && request.resource.data.assetId is string
+            && request.resource.data.assetId.size() <= 256
+            && request.resource.data.status in ['linked', 'removed'];
+        }
+      }
     }
 
     // One document per lowercase username, so a name can only be claimed once.
