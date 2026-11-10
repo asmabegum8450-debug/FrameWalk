@@ -1,6 +1,7 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frame_walk/backend/providers/route_provider.dart';
 import 'package:frame_walk/backend/services/local_photo_service.dart';
 import 'package:frame_walk/backend/services/walk_gallery_service.dart';
 import 'package:frame_walk/backend/services/walk_history_service.dart';
@@ -10,12 +11,14 @@ import 'package:frame_walk/frontend/screens/walk_photos_page.dart';
 import 'package:frame_walk/frontend/widgets/local_photo_thumbnail.dart';
 import 'package:frame_walk/frontend/widgets/photo_access_card.dart';
 import 'package:frame_walk/models/walk_record.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   late FakeFirebaseFirestore firestore;
   late WalkHistoryService history;
   late FakeLocalPhotoService photos;
   late WalkGalleryService galleryService;
+  late RouteProvider routes;
 
   DateTime minutesIn(int minutes) => walkStart.add(Duration(minutes: minutes));
 
@@ -24,6 +27,7 @@ void main() {
     history = WalkHistoryService(firestore: firestore);
     photos = FakeLocalPhotoService();
     galleryService = WalkGalleryService(photos: photos, history: history);
+    routes = RouteProvider();
     await firestore.collection('users').doc('user-1').set({
       'username': 'walker',
       'routesCompleted': 0,
@@ -34,12 +38,15 @@ void main() {
 
   Future<void> openActivity(WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ActivityPage(
-            walkHistoryService: history,
-            photoService: photos,
-            userId: 'user-1',
+      ChangeNotifierProvider.value(
+        value: routes,
+        child: MaterialApp(
+          home: Scaffold(
+            body: ActivityPage(
+              walkHistoryService: history,
+              photoService: photos,
+              userId: 'user-1',
+            ),
           ),
         ),
       ),
@@ -96,6 +103,9 @@ void main() {
     });
 
     testWidgets('saved walks tab still works', (tester) async {
+      routes
+        ..toggleBookmark('2')
+        ..toggleBookmark('3');
       await openActivity(tester);
 
       await tester.tap(find.text('Saved Walks').first);

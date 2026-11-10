@@ -1,9 +1,9 @@
 
 import 'package:flutter/material.dart';
-import '../../models/photo_route.dart';
+import '../../backend/services/route_manager.dart';
 
 class RouteCard extends StatelessWidget {
-  final PhotoRoute route;
+  final WalkingRoute route;
   final VoidCallback onTap;
   final VoidCallback onBookmarkTap;
 
@@ -31,7 +31,7 @@ class RouteCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      route.title,
+                      route.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -54,7 +54,7 @@ class RouteCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.access_time, size: 16),
                   const SizedBox(width: 4),
-                  Text('${route.durationMinutes} min'),
+                  Text('${route.estimatedMinutes} min'),
                   const SizedBox(width: 12),
                   const Icon(Icons.place_outlined, size: 16),
                   const SizedBox(width: 4),

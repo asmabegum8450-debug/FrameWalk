@@ -12,10 +12,12 @@ class RouteFilterChips extends StatelessWidget {
     required this.onSceneryChanged,
   });
 
-  final String duration;
-  final String distance;
-  final String scenery;
+  final String duration; // the selected duration
+  final String distance; // the selected distance
+  final String scenery; // the selected scenery
 
+  // allow data to be passed from child widget to parent - used to pass what option user
+  // selects from filter chips
   final ValueChanged<String> onDurationChanged;
   final ValueChanged<String> onDistanceChanged;
   final ValueChanged<String> onSceneryChanged;

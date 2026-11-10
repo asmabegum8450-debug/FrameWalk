@@ -1,15 +1,15 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../backend/providers/route_provider.dart';
 import '../../backend/services/local_photo_service.dart';
 import '../../backend/services/photo_manager_photo_service.dart';
 import '../../backend/services/walk_gallery_service.dart';
 import '../../backend/services/walk_history_service.dart';
-import '../../models/photo_route.dart';
 import '../utils/walk_formatting.dart';
 import '../widgets/route_card.dart';
-import '../../models/mock_route_data.dart';
 import 'route_info_page.dart';
 import 'walked_route_page.dart';
 
@@ -105,69 +105,8 @@ class _ActivityPageState extends State<ActivityPage>
     );
   }
 
- // Temporary saved-route data.
-  // These should eventually be shared with HomePage.
-  final List<PhotoRoute> _savedRoutes = [
-    const PhotoRoute(
-      id: '1',
-      title: 'Red Square Walk',
-      durationMinutes: 10,
-      distanceMiles: 0.5,
-      sceneryTags: ['Architecture', 'Urban'],
-      isBookmarked: true,
-    ),
-    const PhotoRoute(
-      id: '2',
-      title: 'UW Nature Walk',
-      durationMinutes: 20,
-      distanceMiles: 1.2,
-      sceneryTags: ['Nature', 'Urban'],
-      isBookmarked: true,
-    ),
-    const PhotoRoute(
-      id: '3',
-      title: 'Waterfront Views',
-      durationMinutes: 30,
-      distanceMiles: 1.8,
-      sceneryTags: ['Water', 'Nature'],
-      isBookmarked: true,
-    ),
-  ];
-
-  // for now replaces the route with a copy that isn't bookmarked - change in future
-  void _toggleBookmark(PhotoRoute route) {
-    setState(() {
-      final index = _savedRoutes.indexWhere(
-        (savedRoute) => savedRoute.id == route.id,
-      );
-
-      if (index != -1) {
-        _savedRoutes[index] = _savedRoutes[index].copyWith(
-          isBookmarked: !_savedRoutes[index].isBookmarked,
-        );
-      }
-    });
-  }
-
-  void _openRoute(PhotoRoute route) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => RouteInfoPage(
-        route: route,
-        stops: MockRouteData.getStops(route.id),
-        routePoints: MockRouteData.getRoutePoints(route.id),
-      ),
-    ),
-  );
-}
-
   @override
   Widget build(BuildContext context) {
-    final savedRoutes = _savedRoutes
-        .where((route) => route.isBookmarked)
-        .toList();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -222,30 +161,30 @@ class _ActivityPageState extends State<ActivityPage>
               ? _buildPreviousWalks()
 
               // Saved routes use the same cards as Home.
-              : savedRoutes.isEmpty
-                  ? const Center(
-                      child: Text('No saved walks yet.'),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                      ),
+              : Consumer<RouteProvider>(
+                  builder: (context, provider, _) {
+                    final savedRoutes = provider.bookmarkedRoutes;
+                    if (savedRoutes.isEmpty) {
+                      return const Center(child: Text('No saved walks yet.'));
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: savedRoutes.length,
                       itemBuilder: (context, index) {
                         final route = savedRoutes[index];
-
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: RouteCard(
                             route: route,
-                            onTap: () => _openRoute(route),
-                            onBookmarkTap: () {
-                              _toggleBookmark(route);
-                            },
+                            onTap: () => RouteInfoPage.open(context, route),
+                            onBookmarkTap: () =>
+                                provider.toggleBookmark(route.id),
                           ),
                         );
                       },
-                    ),
+                    );
+                  },
+                ),
         ),
       ],
     );
