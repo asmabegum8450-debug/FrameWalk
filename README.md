@@ -118,7 +118,7 @@ Quick facts about how this project is configured:
 
 #### 1.1 Install Flutter (includes Dart)
 
-Dart comes bundled with Flutter, so you don't install it separately. The project requires Dart `^3.13.5` (see `pubspec.yaml`), so use a current **stable** Flutter release. The project was set up with Flutter 3.47.8.
+Dart comes bundled with Flutter, so you don't install it separately. The project requires Dart `^3.13.5` (see `pubspec.yaml`), so use a current **stable** Flutter release. The project was set up with Flutter 3.47.7.
 
 1. Follow the official install guide for your OS and choose **Android** as the target platform:
    - macOS: <https://docs.flutter.dev/get-started/install/macos>
