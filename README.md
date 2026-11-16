@@ -92,10 +92,12 @@ As the seasons change, we want users to reflect on a detailed catalog of their e
 
 ## Adding Tests
 - All tests should exist in the frame_walk/test folder (outside of lib) under either frame_walk/test/backend or frame_walk/test/frontend depending on the test. Mocks for testing should go in frame_walk/test/fakes.
-- If for existing test suite (auth_service_test.dart, prompt_generator_test.dart, route_manager_test.dart, route_provider_test.dart, and auth_flow_test.dart), add to the existing file and it will be linted and run upon CI trigger
-- If new file, ensure proper syntax and end file name with _test.dart
-- Tests should use group() from the flutter_test package to group together test() calls from the flutter_test package so that tests are grouped and run together logically. Each group() and test() should have descriptive description fields.
-- Each test() call should contain expect(a, b) calls with two parameters passed in (a, b). The first (a) should be the actual value where the second (b) is the expected value. 
+   - The “flutter test” command will look in the top level frame_walk/test/ folder and will only run files that end in _test.dart. Ensure all files for testing end in _test.dart so that they are run.
+   -  Files in frame_walk/test/fakes should not end in _test.dart as files in this folder should only be mock data for testing and not hold any tests themselves
+- If adding to an existing test suite (auth_service_test.dart, prompt_generator_test.dart, route_manager_test.dart, route_progress_tracker_test.dart, walk_repository_test.dart, walk_tracking_service_test.dart, route_provider_test.dart, active_walk_page_test.dart, and auth_flow_test.dart), add to the existing file and it will be linted and run upon CI trigger
+- New test files should be created when they’re for a unit/component that hasn’t been tested and should only test one logical unit. New files should use proper syntax
+   - Tests should use group() from the flutter_test package to group together test() calls from the flutter_test package so that tests are grouped and run together logically. Each group() and test() should have descriptive description fields.
+   - Each test() call should contain expect(a, b) calls with two parameters passed in (a, b). The first (a) should be the actual value where the second (b) is the expected value. 
 
 
 ## Android Setup and Google Maps Configuration
