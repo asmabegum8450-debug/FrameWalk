@@ -62,7 +62,7 @@ double calculateTotalPrice(List<Item> items) {
   return total;
 }
 ```
-## 1.3 Single Responsibility Princiiple
+## 1.3 Single Responsibility Principle
 
 The Single Responsibility Principle (SRP) states that every class or function should have **only one reason to change**. By keeping your classes and functions focused on a single task, you make your code more maintainable and testable.
 
