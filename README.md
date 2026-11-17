@@ -7,11 +7,11 @@ An app designed to help you find inspiration and never run out of things to phot
 - [Living Document](https://docs.google.com/document/d/1lYug-M3YyP1dTDqYPlPpnL4UAtH1hgJSdiU_M_lnueI/edit?tab=t.0)
 - [Figma](https://www.figma.com/design/9afJm17FYCXVwcnU6hJhCi/CSE-403?node-id=0-1&m=dev&t=1FsT888g7EucfzPl-1)
 - Setup Instructions
-   - [Android Setup](docs/android-setup.md)
-   - [iOS Setup](docs/ios-setup.md)
-   - [Firebase Setup](docs/firebase-setup.md)
-   - [GPS Tracking](docs/gps-tracking.md)
-- [Coding Guidelines](docs/coding-guidelines.md)
+   - [Android Setup](frame_walk/docs/android-setup.md)
+   - [iOS Setup](frame_walk/docs/ios-setup.md)
+   - [Firebase Setup](frame_walk/docs/firebase-setup.md)
+   - [GPS Tracking](frame_walk/docs/gps-tracking.md)
+- [Coding Guidelines](frame_walk/docs/coding-guidelines.md)
 
 ## Layout
 
