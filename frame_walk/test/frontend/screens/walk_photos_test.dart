@@ -70,6 +70,11 @@ void main() {
         ),
       ],
     );
+    // Saving photos updates the account's photosTaken count.
+    await firestore.collection('users').doc(uid).set({
+      'username': 'walker',
+      'photosTaken': 0,
+    });
     await firestore
         .collection('users')
         .doc(uid)

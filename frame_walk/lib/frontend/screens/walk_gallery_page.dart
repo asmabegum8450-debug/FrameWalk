@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../backend/providers/profile_provider.dart';
 import '../../backend/services/walk_photo_service.dart';
 import '../../models/walk_photo.dart';
 import '../utils/photo_picker.dart';
@@ -63,8 +65,10 @@ class _WalkGalleryPageState extends State<WalkGalleryPage> {
       ),
     );
     // Some changes may have saved even if the editor was closed after an
-    // error, so always refresh.
-    if (mounted) _reload();
+    // error, so always refresh. That includes the Account page's photo count.
+    if (!mounted) return;
+    _reload();
+    context.read<ProfileProvider?>()?.refresh();
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'frontend/screens/auth_gate.dart';
 import 'frontend/theme/app_theme.dart';
+import 'backend/providers/profile_provider.dart';
 import 'backend/providers/route_provider.dart';
 
 Future<void> main() async {
@@ -18,8 +19,11 @@ class FrameWalkApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => RouteProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => RouteProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+      ],
       child: MaterialApp(
         title: 'FrameWalk',
         theme: AppTheme.lightTheme,

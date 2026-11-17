@@ -4,6 +4,7 @@
 // integration_test/walk_photo_service_emulator_test.dart.
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frame_walk/backend/services/image_validation.dart';
@@ -75,6 +76,12 @@ void main() {
             ),
           ],
     );
+    // Every real user has an account document; saving photos updates its
+    // photosTaken count. Merged so seeding a second walk keeps the count.
+    await firestore
+        .collection('users')
+        .doc(userId)
+        .set({'username': userId}, SetOptions(merge: true));
     await firestore
         .collection('users')
         .doc(userId)
@@ -736,6 +743,61 @@ void main() {
         service.updatePhotoStop('walk-friday', monday.photoId, 'red_2'),
         throwsA(isA<PhotoFailure>()),
       );
+    });
+  });
+
+  // The Account page's photo statistic is the account's photosTaken count.
+  group('account photo count', () {
+    Future<int?> photosTaken() async {
+      final account = await firestore.collection('users').doc(uid).get();
+      return (account.data()!['photosTaken'] as num?)?.toInt();
+    }
+
+    test('uploading adds each saved photo to the count', () async {
+      await seedWalk('walk-a');
+      await service.uploadPhotos('walk-a', [
+        service.preparePhoto(jpeg()),
+        service.preparePhoto(jpeg(), stopId: 'red_1'),
+      ]);
+      expect(await photosTaken(), 2);
+
+      await service.uploadPhotos('walk-a', [service.preparePhoto(jpeg())]);
+      expect(await photosTaken(), 3);
+    });
+
+    test('deleting a photo removes it from the count', () async {
+      await seedWalk('walk-a');
+      final [photo, _] = await service.uploadPhotos('walk-a', [
+        service.preparePhoto(jpeg()),
+        service.preparePhoto(jpeg()),
+      ]);
+      await service.deletePhoto('walk-a', photo.photoId);
+      expect(await photosTaken(), 1);
+    });
+
+    test('changing a prompt does not change the count', () async {
+      await seedWalk('walk-a');
+      final [photo] = await service.uploadPhotos('walk-a', [
+        service.preparePhoto(jpeg()),
+      ]);
+      await service.updatePhotoStop('walk-a', photo.photoId, 'red_2');
+      expect(await photosTaken(), 1);
+    });
+
+    test('a failed upload does not count', () async {
+      await seedWalk('walk-a');
+      storage.failAllUploads = true;
+      final changes = PhotoChangeSet()..add(service.preparePhoto(jpeg()));
+      await service.saveChanges('walk-a', changes);
+      expect(await photosTaken(), isNull);
+    });
+
+    test('a failed Firestore write does not count', () async {
+      await seedWalk('walk-a');
+      firestore.failBatchCommits = 1;
+      final changes = PhotoChangeSet()..add(service.preparePhoto(jpeg()));
+      await service.saveChanges('walk-a', changes);
+      expect(await photosTaken(), isNull);
     });
   });
 }

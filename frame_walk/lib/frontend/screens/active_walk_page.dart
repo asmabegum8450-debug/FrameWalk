@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
+import '../../backend/providers/profile_provider.dart';
 import '../../backend/services/location_source.dart';
 import '../../backend/services/route_manager.dart';
 import '../../backend/services/route_progress_tracker.dart';
@@ -121,6 +123,12 @@ class _ActiveWalkPageState extends State<ActiveWalkPage>
 
   Future<void> _finish() async {
     await _service.completeWalk();
+    // The walk and routesCompleted are saved now, so the Account page can
+    // show them. Nullable so pages built without a ProfileProvider (tests)
+    // still work.
+    if (mounted && _service.phase == WalkPhase.completed) {
+      context.read<ProfileProvider?>()?.refresh();
+    }
   }
 
   Future<void> _confirmCancel() async {

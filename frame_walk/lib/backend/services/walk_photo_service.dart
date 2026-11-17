@@ -17,6 +17,9 @@ import 'walk_repository.dart';
 //   users/{uid}/walks/{walkedRouteId}/photos/{photoId}       WalkPhoto
 //   users/{uid}/walkedRoutes/{walkedRouteId}/photos/{photoId} image file
 //
+// Saving also keeps the account's photosTaken count (users/{uid}) in step
+// with the photos added and removed.
+//
 // Every call works on the signed-in user's own data. There is no way to name
 // another user, and firestore.rules / storage.rules enforce the same thing on
 // the server.
@@ -313,6 +316,13 @@ class WalkPhotoService {
           'updatedAt': Timestamp.fromDate(now),
         });
       });
+      // In the same batch as the metadata, so the account's photo count
+      // can't disagree with the photos saved (as with routesCompleted).
+      if (newPhotos.isNotEmpty) {
+        batch.update(_account(uid), {
+          'photosTaken': FieldValue.increment(newPhotos.length),
+        });
+      }
       try {
         await batch.commit();
       } catch (error) {
@@ -366,10 +376,17 @@ class WalkPhotoService {
       changes.deletions.forEach(remaining.remove);
     } else if (changes.deletions.isNotEmpty) {
       final batch = _firestore.batch();
+      var removedCount = 0;
       for (final photoId in changes.deletions) {
         if (existing.containsKey(photoId)) {
           batch.delete(_photos(uid, walkedRouteId).doc(photoId));
+          removedCount++;
         }
+      }
+      if (removedCount > 0) {
+        batch.update(_account(uid), {
+          'photosTaken': FieldValue.increment(-removedCount),
+        });
       }
       try {
         await batch.commit();
@@ -486,6 +503,9 @@ class WalkPhotoService {
       .collection('walks')
       .doc(walkedRouteId)
       .collection('photos');
+
+  DocumentReference<Map<String, dynamic>> _account(String uid) =>
+      _firestore.collection('users').doc(uid);
 
   String _requireUid() {
     final user = _auth.currentUser;
