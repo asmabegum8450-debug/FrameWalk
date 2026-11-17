@@ -6,6 +6,12 @@ An app designed to help you find inspiration and never run out of things to phot
 - [**User Guide**](https://docs.google.com/document/d/10nhHqrpsAJrck1gYdsq_RcXdFm_2nfoR1fQ4NzOpduM/edit?usp=sharing)
 - [Living Document](https://docs.google.com/document/d/1lYug-M3YyP1dTDqYPlPpnL4UAtH1hgJSdiU_M_lnueI/edit?tab=t.0)
 - [Figma](https://www.figma.com/design/9afJm17FYCXVwcnU6hJhCi/CSE-403?node-id=0-1&m=dev&t=1FsT888g7EucfzPl-1)
+- Setup Instructions
+   - [Android Setup](frame_walk/docs/android-setup.md)
+   - [iOS Setup](frame_walk/docs/ios-setup.md)
+   - [Firebase Setup](frame_walk/docs/firebase-setup.md)
+   - [GPS Tracking](frame_walk/docs/gps-tracking.md)
+- [Coding Guidelines](frame_walk/docs/coding-guidelines.md)
 
 ## Layout
 
@@ -68,10 +74,15 @@ test/
 │   ├── screens/
 │   │   └── active_walk_page_test.dart
 │   └── auth_flow_test.dart
+docs/
+├── android-setup.md
+├── coding-guidelines.md
+├── firebase-setup.md
+├── gps-tracking.md
+├── ios-setup.md
 .gitignore
 LICENSE
 README.md
-coding-guidelines.md
 
 ```
 
@@ -621,3 +632,4 @@ firebase emulators:exec --project demo-framewalk --only auth,firestore,storage \
 
 - [Living Document](https://docs.google.com/document/d/1lYug-M3YyP1dTDqYPlPpnL4UAtH1hgJSdiU_M_lnueI/edit?tab=t.0)
 - [Figma](https://www.figma.com/design/9afJm17FYCXVwcnU6hJhCi/CSE-403?node-id=0-1&m=dev&t=1FsT888g7EucfzPl-1)
+   - Each test() call should contain expect(a, b) calls with two parameters passed in (a, b). The first (a) should be the actual value where the second (b) is the expected value. 
