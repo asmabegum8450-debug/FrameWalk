@@ -25,6 +25,17 @@ class AuthService {
   // Emits the signed-in user, or null when nobody is signed in.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  // The signed-in user's ID, or null when nobody is signed in.
+  String? get currentUserId => _auth.currentUser?.uid;
+
+  // The account saved by createAccount, or null if [uid] has no account
+  // document. Firestore errors are passed on to the caller.
+  Future<UserAccount?> fetchAccount(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    final data = doc.data();
+    return data == null ? null : UserAccount.fromMap(doc.id, data);
+  }
+
   Future<void> createAccount({
     required String email,
     required String username,

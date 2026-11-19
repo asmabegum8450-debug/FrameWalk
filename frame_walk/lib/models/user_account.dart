@@ -22,4 +22,16 @@ class UserAccount {
       'photosTaken': photosTaken,
     };
   }
+
+  // Counters default to 0 so accounts created before a counter existed
+  // still load.
+  factory UserAccount.fromMap(String uid, Map<String, dynamic> map) {
+    return UserAccount(
+      uid: uid,
+      username: map['username'] as String? ?? '',
+      email: map['email'] as String? ?? '',
+      routesCompleted: (map['routesCompleted'] as num?)?.toInt() ?? 0,
+      photosTaken: (map['photosTaken'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
