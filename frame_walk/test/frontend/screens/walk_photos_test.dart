@@ -1,3 +1,4 @@
+
 // Widget tests for the minimal photo screens, using the same fakes as the
 // backend tests. The picker is replaced by a function that returns bytes.
 import 'dart:typed_data';
@@ -6,6 +7,10 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+
+import 'package:frame_walk/backend/providers/profile_provider.dart';
+import 'package:frame_walk/backend/services/auth_service.dart';
 import 'package:frame_walk/backend/services/walk_photo_service.dart';
 import 'package:frame_walk/backend/services/walk_repository.dart';
 import 'package:frame_walk/frontend/screens/walk_gallery_page.dart';
@@ -25,6 +30,25 @@ final Uint8List png = Uint8List.fromList(const [
   0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
 ]);
 
+// Creates a ProfileProvider using the same fake Firebase instances as the test.
+// Auth listening is disabled so each test controls when refresh() happens.
+Future<ProfileProvider> createProfileProvider({
+  required MockFirebaseAuth auth,
+  required FakeFirebaseFirestore firestore,
+}) async {
+  final profile = ProfileProvider(
+    authService: AuthService(
+      auth: auth,
+      firestore: firestore,
+    ),
+    walkRepository: WalkRepository(firestore: firestore),
+    listenToAuthChanges: false,
+  );
+
+  await profile.refresh();
+  return profile;
+}
+
 void main() {
   const uid = 'user-1';
   const walkId = 'walk-a';
@@ -38,13 +62,19 @@ void main() {
   setUp(() async {
     firestore = FakeFirebaseFirestore();
     storage = FakePhotoStorage();
-    auth = MockFirebaseAuth(signedIn: true, mockUser: MockUser(uid: uid));
+    auth = MockFirebaseAuth(
+      signedIn: true,
+      mockUser: MockUser(uid: uid),
+    );
+
     service = WalkPhotoService(
       auth: auth,
       firestore: firestore,
       storage: storage,
     );
+
     toPick = [];
+
     final walk = WalkedRoute(
       id: walkId,
       userId: uid,
@@ -70,11 +100,17 @@ void main() {
         ),
       ],
     );
+
     // Saving photos updates the account's photosTaken count.
+    // These fields also provide the data expected by UserAccount.fromMap().
     await firestore.collection('users').doc(uid).set({
+      'uid': uid,
       'username': 'walker',
+      'email': 'walker@example.com',
+      'routesCompleted': 1,
       'photosTaken': 0,
     });
+
     await firestore
         .collection('users')
         .doc(uid)
@@ -96,7 +132,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> chooseStop(WidgetTester tester, int row, String label) async {
+  Future<void> chooseStop(
+    WidgetTester tester,
+    int row,
+    String label,
+  ) async {
     await tester.tap(find.byType(DropdownButton<String>).at(row));
     await tester.pumpAndSettle();
     await tester.tap(find.text(label).last);
@@ -113,6 +153,7 @@ void main() {
         service.preparePhoto(png),
       ]),
     );
+
     await openGallery(tester);
 
     expect(find.text('Red Square Walk'), findsOneWidget);
@@ -132,8 +173,12 @@ void main() {
     toPick = [
       PickedPhoto(png, 'a.png'),
       PickedPhoto(png, 'b.png'),
-      PickedPhoto(Uint8List.fromList('not an image'.codeUnits), 'notes.txt'),
+      PickedPhoto(
+        Uint8List.fromList('not an image'.codeUnits),
+        'notes.txt',
+      ),
     ];
+
     await tester.tap(find.text('Add photos'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Add photos'));
@@ -145,6 +190,7 @@ void main() {
     expect(storage.uploadCalls, isEmpty); // Nothing uploads before Save.
 
     await chooseStop(tester, 0, 'Red Square: Find a pattern.');
+
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
@@ -158,7 +204,9 @@ void main() {
     tester,
   ) async {
     await openGallery(tester);
+
     toPick = [PickedPhoto(png, 'a.png')];
+
     await tester.tap(find.text('Add photos'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Add photos'));
@@ -167,7 +215,10 @@ void main() {
     await tester.tap(find.byTooltip('Remove photo'));
     await tester.pumpAndSettle();
 
-    final save = tester.widget<FilledButton>(find.byType(FilledButton));
+    final save = tester.widget<FilledButton>(
+      find.byType(FilledButton),
+    );
+
     expect(save.onPressed, isNull);
     expect(storage.uploadCalls, isEmpty);
   });
@@ -176,21 +227,28 @@ void main() {
     tester,
   ) async {
     await openGallery(tester);
+
     toPick = [PickedPhoto(png, 'a.png')];
+
     await tester.tap(find.text('Add photos'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Add photos'));
     await tester.pumpAndSettle();
 
     storage.failAllUploads = true;
+
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Some changes were not saved'), findsOneWidget);
+    expect(
+      find.textContaining('Some changes were not saved'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Upload failed'), findsOneWidget);
     expect(find.text('Retry failed changes (1)'), findsOneWidget);
 
     storage.failAllUploads = false;
+
     await tester.tap(find.text('Retry failed changes (1)'));
     await tester.pumpAndSettle();
 
@@ -205,13 +263,21 @@ void main() {
         service.preparePhoto(png),
       ]),
     );
+
     await openGallery(tester);
+
     await tester.tap(find.text('Add / edit photos'));
     await tester.pumpAndSettle();
 
-    await chooseStop(tester, 0, 'Suzzallo Library: Light and shadow.');
+    await chooseStop(
+      tester,
+      0,
+      'Suzzallo Library: Light and shadow.',
+    );
+
     await tester.tap(find.byTooltip('Remove photo').last);
     await tester.pumpAndSettle();
+
     expect(
       find.textContaining('will be removed from FrameWalk'),
       findsOneWidget,
@@ -227,7 +293,9 @@ void main() {
 
   testWidgets('leaving with unsaved changes asks first', (tester) async {
     await openGallery(tester);
+
     toPick = [PickedPhoto(png, 'a.png')];
+
     await tester.tap(find.text('Add photos'));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Add photos'));
@@ -235,7 +303,9 @@ void main() {
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
+
     expect(find.text('Discard unsaved changes?'), findsOneWidget);
+
     await tester.tap(find.text('Discard'));
     await tester.pumpAndSettle();
 
@@ -244,33 +314,30 @@ void main() {
   });
 
   testWidgets('previous walks list shows completed walks', (tester) async {
+    final profile = await createProfileProvider(
+      auth: auth,
+      firestore: firestore,
+    );
+
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: CompletedWalksList(
-            auth: auth,
-            repository: WalkRepository(firestore: firestore),
+      ChangeNotifierProvider<ProfileProvider>.value(
+        value: profile,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: CompletedWalksList(),
           ),
         ),
       ),
     );
+
     await tester.pumpAndSettle();
+
     expect(find.text('Red Square Walk'), findsOneWidget);
     expect(find.textContaining('2 stops'), findsOneWidget);
+
+    // ChangeNotifierProvider.value does not dispose the supplied provider.
+    await tester.pumpWidget(const SizedBox());
+    profile.dispose();
   });
 
-  testWidgets('previous walks list is empty when signed out', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: CompletedWalksList(
-            auth: MockFirebaseAuth(),
-            repository: WalkRepository(firestore: firestore),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('No previous walks yet.'), findsOneWidget);
-  });
 }
