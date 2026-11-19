@@ -262,6 +262,20 @@ void main() {
       expect(ids(provider.search()), ['a', 'b', 'c', 'd']);
     });
 
+    test('searches route descriptions through RouteManager', () {
+      final manager = RouteManager();
+      manager.addRoute(
+        WalkingRoute(
+          id: 'description-test',
+          name: 'Campus Route',
+          description: 'Beautiful cherry blossoms',
+          stopIds: const [],
+        ),
+      );
+      final provider = RouteProvider(manager: manager, seedMockData: false);
+      expect(ids(provider.search(query: 'CHERRY')), ['description-test']);
+    });
+
     group('query', () {
       test('matches part of the name', () {
         expect(ids(provider.search(query: 'walk')), ['a', 'b']);
