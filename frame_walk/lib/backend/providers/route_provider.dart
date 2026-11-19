@@ -11,7 +11,7 @@ class RouteProvider extends ChangeNotifier {
   static const anyDistance = 'Any distance';
   static const anyScenery = 'Any scenery';
 
-  /// Creates a RouteProvider 
+  /// Creates a RouteProvider
   /// Params:
   ///  manager - the RouteManager associated with this RouteProvider. can be null for testing
   ///  purposes (unit tests can build their own RouteManagers with their own routes/mock data)
@@ -48,14 +48,15 @@ class RouteProvider extends ChangeNotifier {
     String distance = anyDistance,
     String scenery = anyScenery,
   }) {
-    final q = query.trim().toLowerCase();
-
+    // RouteManager owns text searching; preserve all existing UI filters.
+    final matchingRoutes = _manager.searchRoutes(query);
     final sceneryMatches = _manager.filterBySceneryTags(
       scenery == anyScenery ? const [] : [scenery],
     );
+    final sceneryIds = sceneryMatches.map((route) => route.id).toSet();
 
-    return sceneryMatches.where((route) {
-      final matchesQuery = route.name.toLowerCase().contains(q);
+    return matchingRoutes.where((route) {
+      if (!sceneryIds.contains(route.id)) return false;
 
       final minutes = route.estimatedMinutes;
       final matchesDuration = switch (duration) {
@@ -72,8 +73,7 @@ class RouteProvider extends ChangeNotifier {
         '2+ mi' => miles > 2,
         _ => true,
       };
-
-      return matchesQuery && matchesDuration && matchesDistance;
+      return matchesDuration && matchesDistance;
     }).toList();
   }
 
