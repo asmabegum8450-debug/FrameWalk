@@ -21,8 +21,8 @@ class WalkingRoute {
     this.distanceMiles = 0.0,
     List<String> sceneryTags = const [],
     this.isBookmarked = false,
-  })  : stopIds = List.unmodifiable(stopIds),
-        sceneryTags = List.unmodifiable(sceneryTags) {
+  }) : stopIds = List.unmodifiable(stopIds),
+       sceneryTags = List.unmodifiable(sceneryTags) {
     if (estimatedMinutes < 0) {
       throw ArgumentError('Estimated minutes cannot be negative');
     }
@@ -103,19 +103,36 @@ class RouteManager {
     return setBookmarked(routeId, !route.isBookmarked);
   }
 
-  List<WalkingRoute> getBookmarkedRoutes() => List.unmodifiable(
-        _routes.values.where((route) => route.isBookmarked),
-      );
+  List<WalkingRoute> getBookmarkedRoutes() =>
+      List.unmodifiable(_routes.values.where((route) => route.isBookmarked));
 
   // Matches routes containing every requested scenery tag (case-insensitive).
   List<WalkingRoute> filterBySceneryTags(List<String> tags) {
-    final requested = tags.map((tag) => tag.trim().toLowerCase())
-        .where((tag) => tag.isNotEmpty).toSet();
-    return List.unmodifiable(_routes.values.where((route) {
-      final available = route.sceneryTags
-          .map((tag) => tag.trim().toLowerCase()).toSet();
-      return available.containsAll(requested);
-    }));
+    final requested = tags
+        .map((tag) => tag.trim().toLowerCase())
+        .where((tag) => tag.isNotEmpty)
+        .toSet();
+    return List.unmodifiable(
+      _routes.values.where((route) {
+        final available = route.sceneryTags
+            .map((tag) => tag.trim().toLowerCase())
+            .toSet();
+        return available.containsAll(requested);
+      }),
+    );
+  }
+
+  // Search by route name or description, ignoring case and whitespace.
+  List<WalkingRoute> searchRoutes(String query) {
+    final search = query.trim().toLowerCase();
+    if (search.isEmpty) return getAllRoutes();
+    return List.unmodifiable(
+      _routes.values.where(
+        (route) =>
+            route.name.toLowerCase().contains(search) ||
+            route.description.toLowerCase().contains(search),
+      ),
+    );
   }
 
   void _validateId(String id) {
